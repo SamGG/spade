@@ -2,6 +2,12 @@
 SPADE.density <- function(tbl, kernel_mult=5.0, apprx_mult=1.5, med_samples=2000)
 	.Call("SPADE_density",t(tbl),kernel_mult,apprx_mult,med_samples)
 
+SPADE.median_min_dist <- function(tbl, med_samples=2000, init_seed=0)
+	.Call("SPADE_median_min_dist",t(tbl),med_samples,init_seed)
+
+SPADE.count_neighbors <- function(tbl, kernel_mult=5.0, apprx_mult=1.5, median_min_dist=1)
+	.Call("SPADE_count_neighbors",t(tbl),kernel_mult,apprx_mult,median_min_dist)
+
 SPADE.addDensityToFCS <- function(
 	infilename, 
 	outfilename, 

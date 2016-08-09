@@ -77,7 +77,7 @@ namespace {
 			if (densities[i] > 0)
 				continue;
 
-			if (!(i % 100000))
+			if (!(i % 5000))
 				Rprintf("  Estimated downsampling-I progress: %2.0f%% ...\n",
 					std::min(99.0,((double)i)/obs * 100.0));
 
@@ -89,6 +89,7 @@ namespace {
 				Dist_t d = distance(point, &data[j*dim], dim);
 				if (d < kernel_width)
 					c++;
+				// TODO: if (d < apprx_width && densities[j] == 0)
 				if (d < apprx_width)
 					apprxs.push_back(j);
 			}
@@ -117,9 +118,9 @@ extern "C" {
 	SEXP SPADE_density(SEXP tbl, SEXP kernel_mult, SEXP apprx_mult, SEXP med_samples) {
 		// tbl is column major order, transposed to be row major
 		size_t obs = static_cast<size_t>(INTEGER(GET_DIM(tbl))[1]), 
-					 dim = static_cast<size_t>(INTEGER(GET_DIM(tbl))[0]);
+		       dim = static_cast<size_t>(INTEGER(GET_DIM(tbl))[0]);
 		Data_t kernel_mult_l = static_cast<Data_t>(asReal(kernel_mult)),
-					 apprx_mult_l  = static_cast<Data_t>(asReal(apprx_mult));
+		       apprx_mult_l  = static_cast<Data_t>(asReal(apprx_mult));
 		size_t med_samples_l = static_cast<size_t>(asInteger(med_samples));	
 
 		SEXP densities;
@@ -127,8 +128,8 @@ extern "C" {
 		Count_t* densities_l = static_cast<Count_t*>(INTEGER(densities));
 
 		Dist_t median_min_dist = compute_median_min_dist(static_cast<Data_t*>(REAL(tbl)), dim, obs, std::min(obs,med_samples_l)),
-					 kernel_width    = kernel_mult_l * median_min_dist,
-					 apprx_width     = apprx_mult_l  * median_min_dist;
+		       kernel_width    = kernel_mult_l * median_min_dist,
+		       apprx_width     = apprx_mult_l  * median_min_dist;
 	
 		count_neighbors(static_cast<Data_t*>(REAL(tbl)), dim, obs, kernel_width, apprx_width, densities_l);	
 	
@@ -136,4 +137,45 @@ extern "C" {
 		return densities;
 	}
 
+	SEXP SPADE_median_min_dist(SEXP tbl, SEXP med_samples, SEXP init_seed) {
+		// tbl is column major order, transposed to be row major
+		size_t obs = static_cast<size_t>(INTEGER(GET_DIM(tbl))[1]), 
+		       dim = static_cast<size_t>(INTEGER(GET_DIM(tbl))[0]);
+		size_t med_samples_l = static_cast<size_t>(asInteger(med_samples));	
+		size_t init_seed_l = static_cast<size_t>(asInteger(init_seed));	
+		
+		SEXP median_min_dist;
+		PROTECT(median_min_dist = allocVector(REALSXP, 1));
+		Dist_t* median_min_dist_l = static_cast<Dist_t*>(REAL(median_min_dist));
+		
+		if (init_seed_l > 0) {
+			std::srand(init_seed_l);
+		}
+		median_min_dist_l[0] = compute_median_min_dist(static_cast<Data_t*>(REAL(tbl)), dim, obs, std::min(obs,med_samples_l));
+
+		UNPROTECT(1);
+		return median_min_dist;
+	}
+
+	SEXP SPADE_count_neighbors(SEXP tbl, SEXP kernel_mult, SEXP apprx_mult, SEXP median_min_dist) {
+		// tbl is column major order, transposed to be row major
+		size_t obs = static_cast<size_t>(INTEGER(GET_DIM(tbl))[1]), 
+		       dim = static_cast<size_t>(INTEGER(GET_DIM(tbl))[0]);
+		Data_t kernel_mult_l = static_cast<Data_t>(asReal(kernel_mult)),
+		       apprx_mult_l  = static_cast<Data_t>(asReal(apprx_mult));
+		Dist_t median_min_dist_l = static_cast<Dist_t>(asReal(median_min_dist));	
+		
+		SEXP densities;
+		PROTECT(densities = allocVector(INTSXP, obs));
+		Count_t* densities_l = static_cast<Count_t*>(INTEGER(densities));
+		
+		Dist_t kernel_width = kernel_mult_l * median_min_dist_l,
+		       apprx_width  = apprx_mult_l  * median_min_dist_l;
+		
+		count_neighbors(static_cast<Data_t*>(REAL(tbl)), dim, obs, kernel_width, apprx_width, densities_l);	
+		
+		UNPROTECT(1);
+		return densities;
+	}
+	
 } // extern
