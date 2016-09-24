@@ -18,6 +18,9 @@ export(
 	"SPADE.flattenAnnotations",
 	"SPADE.read.FCS",
 	"SPADE.removeExistingDensityAndClusterColumns",
+	"SPADE.clustersToMST",
+	"SPADE.cluster",
+	"SPADE.cluster_origin",
 	"SPADE.median_min_dist",
 	"SPADE.count_neighbors"
 )

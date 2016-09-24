@@ -77,7 +77,7 @@ namespace {
 			if (densities[i] > 0)
 				continue;
 
-			if (!(i % 5000))
+			if (!(i % 20000) && (obs > 50000))
 				Rprintf("  Estimated downsampling-I progress: %2.0f%% ...\n",
 					std::min(99.0,((double)i)/obs * 100.0));
 
@@ -106,8 +106,9 @@ namespace {
 
 			densities[i] = c;
 		}
-
-		Rprintf("  Estimated downsampling-I progress: %2.0f%% ...\n", 100.0);
+		
+		if (obs > 50000)
+			Rprintf("  Estimated downsampling-I progress: %2.0f%% ...\n", 100.0);
 
 	}	
 				
